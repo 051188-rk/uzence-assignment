@@ -7,9 +7,9 @@ type IconName =
   | 'FiMenu' | 'FiSun' | 'FiMoon' | 'FiX' 
   | 'FiEye' | 'FiEyeOff' | 'FiLoader' | 'FiPlus'
   | 'FiChevronUp' | 'FiChevronDown' | 'FiChevronLeft' | 'FiChevronRight'
-  | 'FiSearch' | 'FiUser' | 'FiMail' | 'FiLock' 
+  | 'FiSearch' | 'FiUser' | 'FiUsers' | 'FiMail' | 'FiLock' 
   | 'FiCheck' | 'FiEdit2' | 'FiTrash2' | 'FiBriefcase'
-  | 'FiPhone' | 'FiSettings';
+  | 'FiFilter' | 'FiDownload' | 'FiPhone' | 'FiSettings';
 
 interface IconProps extends SVGProps<SVGSVGElement> {
   name: IconName;
@@ -39,8 +39,11 @@ const iconMap: { [key in IconName]?: IconType } = {
   FiEdit2: FiIcons.FiEdit2,
   FiTrash2: FiIcons.FiTrash2,
   FiBriefcase: FiIcons.FiBriefcase,
+  FiFilter: FiIcons.FiFilter,
+  FiDownload: FiIcons.FiDownload,
   FiPhone: FiIcons.FiPhone,
   FiSettings: FiIcons.FiSettings,
+  FiUsers: FiIcons.FiUsers,
 };
 
 export const Icon = ({ 

@@ -1,4 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import type { Meta, StoryObj } from "@storybook/react-webpack5";
+
 import { DataTable, Column } from './DataTable';
 import { Icon } from '../ui/Icon';
 
@@ -192,12 +193,48 @@ const meta: Meta<typeof DataTable<User>> = {
   component: DataTable<User>,
   tags: ['autodocs'],
   argTypes: {
-    selectable: { control: 'boolean' },
-    loading: { control: 'boolean' },
-    sortable: { control: 'boolean' },
-    pagination: { control: 'boolean' },
-    showHeader: { control: 'boolean' },
-    showFooter: { control: 'boolean' },
+    selectable: { 
+      control: 'boolean',
+      table: {
+        type: { summary: 'boolean' },
+        defaultValue: { summary: 'false' },
+      },
+    },
+    loading: { 
+      control: 'boolean',
+      table: {
+        type: { summary: 'boolean' },
+        defaultValue: { summary: 'false' },
+      },
+    },
+    sortable: { 
+      control: 'boolean',
+      table: {
+        type: { summary: 'boolean' },
+        defaultValue: { summary: 'true' },
+      },
+    },
+    pagination: { 
+      control: 'boolean',
+      table: {
+        type: { summary: 'boolean' },
+        defaultValue: { summary: 'false' },
+      },
+    },
+    showHeader: { 
+      control: 'boolean',
+      table: {
+        type: { summary: 'boolean' },
+        defaultValue: { summary: 'true' },
+      },
+    },
+    showFooter: { 
+      control: 'boolean',
+      table: {
+        type: { summary: 'boolean' },
+        defaultValue: { summary: 'false' },
+      },
+    },
   },
   args: {
     data: users,

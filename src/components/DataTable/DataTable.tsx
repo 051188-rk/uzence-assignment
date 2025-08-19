@@ -23,6 +23,7 @@ export interface DataTableProps<T> {
   loading?: boolean;
   selectable?: boolean;
   onRowSelect?: (selectedRows: T[]) => void;
+  onRowClick?: (row: T) => void;
   onSort?: (key: keyof T | string, direction: SortDirection) => void;
   sortable?: boolean;
   defaultSort?: SortState<T>;
@@ -48,13 +49,14 @@ const defaultEmptyState = (
 );
 
 export function DataTable<T>({
-  data = [],
-  columns = [],
+  data,
+  columns,
   loading = false,
   selectable = false,
   onRowSelect,
+  onRowClick,
   onSort,
-  sortable = true,
+  sortable = false,
   defaultSort,
   emptyState = defaultEmptyState,
   className = '',
@@ -64,8 +66,8 @@ export function DataTable<T>({
   pagination = false,
   pageSize = 10,
   onPageChange,
-  currentPage: controlledCurrentPage,
-  totalItems: controlledTotalItems,
+  currentPage: externalCurrentPage,
+  totalItems: externalTotalItems,
   showHeader = true,
   showFooter = false,
   footerContent,
@@ -75,10 +77,10 @@ export function DataTable<T>({
     defaultSort || null
   );
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);
-  
-  const isControlled = controlledCurrentPage !== undefined;
-  const currentPage = isControlled ? controlledCurrentPage : internalCurrentPage;
-  const totalItems = controlledTotalItems !== undefined ? controlledTotalItems : data.length;
+
+  const isControlled = externalCurrentPage !== undefined;
+  const currentPage = isControlled ? externalCurrentPage : internalCurrentPage;
+  const totalItems = externalTotalItems !== undefined ? externalTotalItems : data.length;
   const totalPages = Math.ceil(totalItems / pageSize);
 
   // Reset selected rows when data changes
@@ -95,7 +97,7 @@ export function DataTable<T>({
       newSelectedRows.delete(index);
     }
     setSelectedRows(newSelectedRows);
-    
+
     if (onRowSelect) {
       const selectedData = Array.from(newSelectedRows).map(i => data[i]);
       onRowSelect(selectedData);
@@ -121,9 +123,9 @@ export function DataTable<T>({
   // Handle sorting
   const handleSort = (key: keyof T | string) => {
     if (!sortable) return;
-    
+
     let direction: SortDirection = 'asc';
-    
+
     if (sortState && sortState.key === key) {
       if (sortState.direction === 'asc') {
         direction = 'desc';
@@ -133,10 +135,10 @@ export function DataTable<T>({
         direction = 'asc';
       }
     }
-    
+
     const newSortState = direction ? { key, direction } : null;
     setSortState(newSortState);
-    
+
     if (onSort) {
       onSort(key, direction);
     }
@@ -145,11 +147,11 @@ export function DataTable<T>({
   // Handle pagination
   const handlePageChange = (page: number) => {
     if (page < 1 || page > totalPages) return;
-    
+
     if (!isControlled) {
       setInternalCurrentPage(page);
     }
-    
+
     if (onPageChange) {
       onPageChange(page);
     }
@@ -158,15 +160,15 @@ export function DataTable<T>({
   // Process data based on sorting and pagination
   const processedData = useMemo(() => {
     let result = [...data];
-    
+
     // Apply sorting if needed
     if (sortState && sortState.direction && !onSort) {
       result = [...data].sort((a, b) => {
         const aValue = a[sortState.key as keyof T];
         const bValue = b[sortState.key as keyof T];
-        
+
         if (aValue === bValue) return 0;
-        
+
         if (sortState.direction === 'asc') {
           return aValue < bValue ? -1 : 1;
         } else {
@@ -174,14 +176,14 @@ export function DataTable<T>({
         }
       });
     }
-    
+
     // Apply pagination if needed
     if (pagination && !isControlled) {
       const start = (currentPage - 1) * pageSize;
       const end = start + pageSize;
       result = result.slice(start, end);
     }
-    
+
     return result;
   }, [data, sortState, currentPage, pageSize, pagination, isControlled, onSort]);
 
@@ -190,13 +192,13 @@ export function DataTable<T>({
     if (column.render) {
       return column.render(item);
     }
-    
+
     const value = item[column.key as keyof T];
-    
+
     if (value === undefined || value === null) {
       return '-';
     }
-    
+
     return String(value);
   };
 
@@ -204,7 +206,7 @@ export function DataTable<T>({
   const getPageNumbers = () => {
     const pages = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
@@ -212,73 +214,73 @@ export function DataTable<T>({
     } else {
       // Always show first page
       pages.push(1);
-      
+
       // Calculate start and end of the middle section
       let start = Math.max(2, currentPage - 1);
       let end = Math.min(totalPages - 1, currentPage + 1);
-      
+
       // Adjust if we're near the start or end
       if (currentPage <= 3) {
         end = 4;
       } else if (currentPage >= totalPages - 2) {
         start = totalPages - 3;
       }
-      
+
       // Add ellipsis if needed
       if (start > 2) {
         pages.push('...');
       }
-      
+
       // Add middle pages
       for (let i = start; i <= end; i++) {
         if (i > 1 && i < totalPages) {
           pages.push(i);
         }
       }
-      
+
       // Add ellipsis if needed
       if (end < totalPages - 1) {
         pages.push('...');
       }
-      
+
       // Always show last page
       if (totalPages > 1) {
         pages.push(totalPages);
       }
     }
-    
+
     return pages;
   };
 
   // Check if all rows on current page are selected
   const allSelected = useMemo(() => {
     if (!selectable || !data.length) return false;
-    
+
     const start = (currentPage - 1) * pageSize;
     const end = Math.min(start + pageSize, data.length);
-    
+
     for (let i = start; i < end; i++) {
       if (!selectedRows.has(i)) {
         return false;
       }
     }
-    
+
     return selectedRows.size > 0;
   }, [selectable, data.length, currentPage, pageSize, selectedRows]);
 
   // Check if some rows on current page are selected
   const someSelected = useMemo(() => {
     if (!selectable || !data.length) return false;
-    
+
     const start = (currentPage - 1) * pageSize;
     const end = Math.min(start + pageSize, data.length);
-    
+
     for (let i = start; i < end; i++) {
       if (selectedRows.has(i)) {
         return true;
       }
     }
-    
+
     return false;
   }, [selectable, data.length, currentPage, pageSize, selectedRows]);
 
@@ -356,7 +358,7 @@ export function DataTable<T>({
                   </tr>
                 </thead>
               )}
-              
+
               <tbody className={`bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700 ${bodyClassName}`}>
                 {loading ? (
                   <tr>
@@ -388,15 +390,19 @@ export function DataTable<T>({
                       typeof rowClassName === 'function'
                         ? rowClassName(item, rowIndex)
                         : rowClassName;
-                    
+
                     return (
                       <tr
                         key={rowIndex}
-                        className={`hover:bg-gray-50 dark:hover:bg-gray-800 ${
-                          selectedRows.has(rowIndex)
-                            ? 'bg-blue-50 dark:bg-blue-900/30'
-                            : ''
-                        } ${rowClass || ''}`}
+                        className={`group relative w-full text-left text-sm transition-colors
+                          ${selectedRows.has(rowIndex) ? 'bg-blue-50 dark:bg-blue-900/30' : ''}
+                          ${onRowClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800' : ''}
+                          ${rowClass}`}
+                        onClick={() => {
+                          if (onRowClick) {
+                            onRowClick(item);
+                          }
+                        }}
                       >
                         {selectable && (
                           <td className="px-6 py-4 whitespace-nowrap">
